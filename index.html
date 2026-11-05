@@ -1,1 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Polar Amplification: Projected Warming by Latitude</title>
+    <style>
+        :root {
+            --ink: #17212b;
+            --muted: #5a6877;
+            --rule: #d5dde4;
+            --bg: #f4f7f9;
+            --panel: #ffffff;
+            --accent: #c0392b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 20px 56px;
+        }
+
+        h1 {
+            font: 600 1.85rem/1.2 Charter, "Iowan Old Style", Georgia, serif;
+            margin: 0 0 8px;
+            max-width: 24em;
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: .88rem;
+            margin: 0 0 22px;
+            max-width: 68ch;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px 28px;
+            margin-bottom: 16px;
+        }
+
+        .seg {
+            display: inline-flex;
+        }
+
+        .seg button {
+            font: inherit;
+            font-size: .92rem;
+            padding: 7px 15px;
+            cursor: pointer;
+            border: 1px solid var(--rule);
+            background: var(--panel);
+            color: var(--ink);
+        }
+
+        .seg button:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .seg button:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .seg button+button {
+            margin-left: -1px;
+        }
+
+        .seg button[aria-pressed="true"] {
+            background: var(--c);
+            border-color: var(--c);
+            color: #fff;
+            position: relative;
+        }
+
+        .time {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        #year-slider {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        #year-label {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            min-width: 3.2ch;
+            font-size: 1.1rem;
+        }
+
+        #play {
+            font: inherit;
+            font-size: .92rem;
+            padding: 7px 12px;
+            min-width: 5.4em;
+            cursor: pointer;
+            border: 1px solid var(--rule);
+            background: var(--panel);
+            border-radius: 6px;
+        }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid #1f6feb;
+            outline-offset: 2px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 210px;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 780px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart {
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: var(--panel);
+            border: 1px solid var(--rule);
+        }
+
+        svg text {
+            fill: var(--muted);
+            font: 12px system-ui, sans-serif;
+        }
+
+        svg .axis-title {
+            font-size: 12.5px;
+        }
+
+        svg .band-label {
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .tip {
+            position: absolute;
+            pointer-events: none;
+            display: none;
+            white-space: nowrap;
+            background: var(--ink);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: .82rem;
+        }
+
+        .stats {
+            margin: 0;
+        }
+
+        .stats div {
+            padding: 11px 0;
+            border-top: 1px solid var(--rule);
+        }
+
+        .stats div:last-child {
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .stats dt {
+            color: var(--muted);
+            font-size: .84rem;
+        }
+
+        .stats dd {
+            margin: 0;
+            font: 600 1.65rem/1.25 Charter, Georgia, serif;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stats .ratio dd {
+            color: var(--accent);
+            font-size: 2rem;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: .84rem;
+            margin: 12px 0 0;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                scroll-behavior: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Polar Amplification: Latitudinal Asymmetry in Projected Surface Warming</h1>
+        <p class="sub" id="method"></p>
+
+        <div class="controls">
+            <div class="seg" role="group" aria-label="Emissions scenario" id="scenarios"></div>
+            <div class="time">
+                <button id="play" type="button">Play</button>
+                <input id="year-slider" type="range" aria-label="Year">
+                <span id="year-label"></span>
+            </div>
+        </div>
+
+        <div class="layout">
+            <div class="chart" id="chart">
+                <div class="tip" id="tip"></div>
+            </div>
+            <div>
+                <dl class="stats">
+                    <div>
+                        <dt>Arctic (70-90°N)</dt>
+                        <dd id="s-arctic"></dd>
+                    </div>
+                    <div>
+                        <dt>Tropics (20°S-20°N)</dt>
+                        <dd id="s-trop"></dd>
+                    </div>
+                    <div>
+                        <dt>Global average</dt>
+                        <dd id="s-global"></dd>
+                    </div>
+                    <div class="ratio">
+                        <dt>Arctic warming ÷ global</dt>
+                        <dd id="s-ratio"></dd>
+                    </div>
+                </dl>
+                <p class="hint">Pick a scenario, drag the year, and hover the chart to read any latitude band.</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script>
+        const DATA_URL = "data/cmip6_zonal_warming_ensmean.csv";
+        const MODEL_COUNT = 3;   // TODO: set to the number of models in your CSV
+        const HALF_WINDOW = 5;   // years averaged on each side of the selected year
+
+        const SCEN = [
+            { id: "ssp126", label: "SSP1-2.6", color: "#2b6cb0" },
+            { id: "ssp245", label: "SSP2-4.5", color: "#dd8a1a" },
+            { id: "ssp585", label: "SSP5-8.5", color: "#c0392b" }
+        ];
+        const W = 640, H = 540, M = { t: 14, r: 18, b: 50, l: 56 };
+        const IW = W - M.l - M.r, IH = H - M.t - M.b;
+
+        const cosw = lat => Math.cos(lat * Math.PI / 180);
+        const fmtLat = d => d === 0 ? "0°" : Math.abs(d) + "°" + (d < 0 ? "S" : "N");
+        const fmtC = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(1) + " °C";
+
+        document.getElementById("method").textContent =
+            "Warming is projected near-surface air temperature minus each model's 1995-2014 average. " +
+            "Annual means, averaged over all longitudes in 5° latitude bands, then averaged across " + MODEL_COUNT +
+            " CMIP6 models and over an 11-year window centered on the selected year. " +
+            "Arctic, tropical and global averages are weighted by cos(latitude).";
+
+        d3.csv(DATA_URL, d3.autoType).then(init).catch(() => {
+            document.getElementById("chart").textContent =
+                "Could not load " + DATA_URL + ". Serve this folder with a web server (e.g. python -m http.server) instead of opening the file directly.";
+        });
+
+        function init(rows) {
+            rows.sort((a, b) => a.lat - b.lat);
+            const data = d3.group(rows, d => d.scenario, d => d.year);
+            const years = [...new Set(rows.map(d => d.year))].sort(d3.ascending);
+            const [y0, y1] = d3.extent(years);
+            const state = { scen: "ssp585", year: Math.min(2090, y1) };
+
+            // Mean profile (latitude -> warming) around the selected year
+            function profile(scen, year) {
+                const m = data.get(scen);
+                const ys = d3.range(year - HALF_WINDOW, year + HALF_WINDOW + 1).filter(y => m.has(y));
+                return m.get(ys[0]).map((r, i) => ({ lat: r.lat, w: d3.mean(ys, y => m.get(y)[i].warming) }));
+            }
+            function wmean(p, lo, hi) {
+                const s = p.filter(d => d.lat >= lo && d.lat <= hi && d.w != null);
+                return d3.sum(s, d => d.w * cosw(d.lat)) / d3.sum(s, d => cosw(d.lat));
+            }
+
+            // Scales (x is fixed across scenarios and years so changes are comparable)
+            const x = d3.scaleLinear([Math.min(0, d3.min(rows, d => d.warming)), d3.max(rows, d => d.warming)], [0, IW]).nice();
+            const y = d3.scaleLinear([-90, 90], [IH, 0]);
+            const line = d3.line().defined(d => d.w != null).x(d => x(d.w)).y(d => y(d.lat)).curve(d3.curveMonotoneY);
+
+            const svg = d3.select("#chart").append("svg").attr("viewBox", `0 0 ${W} ${H}`)
+                .attr("role", "img").attr("aria-label", "Projected warming by latitude for the selected scenario and year");
+            const g = svg.append("g").attr("transform", `translate(${M.l},${M.t})`);
+
+            // Highlighted latitude zones
+            [[90, 70, "#c0392b", "Arctic"], [20, -20, "#dd8a1a", "Tropics"]].forEach(([top, bot, c, label]) => {
+                g.append("rect").attr("x", 0).attr("y", y(top)).attr("width", IW).attr("height", y(bot) - y(top)).attr("fill", c).attr("opacity", .08);
+                g.append("text").attr("class", "band-label").attr("x", IW - 6).attr("y", y(top) + 15).attr("text-anchor", "end").text(label);
+            });
+
+            g.append("g").selectAll("line").data(d3.range(-90, 91, 30)).join("line")
+                .attr("x1", 0).attr("x2", IW).attr("y1", d => y(d)).attr("y2", d => y(d)).attr("stroke", "#e6ebf0");
+            g.append("g").attr("transform", `translate(0,${IH})`).call(d3.axisBottom(x).ticks(7));
+            g.append("g").call(d3.axisLeft(y).tickValues(d3.range(-90, 91, 30)).tickFormat(fmtLat));
+            g.append("text").attr("class", "axis-title").attr("x", IW / 2).attr("y", IH + 40).attr("text-anchor", "middle")
+                .text("Warming vs 1995-2014 (°C)");
+            g.append("text").attr("class", "axis-title").attr("transform", "rotate(-90)").attr("x", -IH / 2).attr("y", -42)
+                .attr("text-anchor", "middle").text("Latitude");
+
+            const paths = {};
+            SCEN.forEach(s => { paths[s.id] = g.append("path").attr("fill", "none").attr("stroke", s.color).attr("stroke-linejoin", "round"); });
+            const gLine = g.append("line").attr("y1", 0).attr("y2", IH).attr("stroke", "#17212b").attr("stroke-dasharray", "4 4");
+            const gText = g.append("text").attr("y", IH - 8).attr("text-anchor", "start").text("Global average");
+            const dot = g.append("circle").attr("r", 5).attr("fill", "#fff").attr("stroke-width", 2.5).style("display", "none");
+            const overlay = g.append("rect").attr("width", IW).attr("height", IH).attr("fill", "none").attr("pointer-events", "all");
+
+            // Controls
+            const segBox = d3.select("#scenarios");
+            segBox.selectAll("button").data(SCEN).join("button").attr("type", "button")
+                .style("--c", d => d.color).text(d => d.label)
+                .on("click", (e, d) => { state.scen = d.id; update(); });
+            const slider = document.getElementById("year-slider");
+            slider.min = y0; slider.max = y1; slider.value = state.year;
+            const playBtn = document.getElementById("play");
+            let timer = null, current = [], globalW = 0;
+
+            function stop() { if (timer) { timer.stop(); timer = null; } playBtn.textContent = "Play"; }
+            function sync() { slider.value = state.year; update(); }
+            slider.addEventListener("input", () => { stop(); state.year = +slider.value; update(); });
+            playBtn.addEventListener("click", () => {
+                if (timer) { stop(); return; }
+                if (state.year >= y1) state.year = y0;
+                playBtn.textContent = "Pause";
+                timer = d3.interval(() => { if (state.year >= y1) { stop(); return; } state.year++; sync(); }, 110);
+            });
+
+            function update() {
+                const sc = SCEN.find(s => s.id === state.scen);
+                SCEN.forEach(s => {
+                    const sel = s.id === state.scen;
+                    paths[s.id].datum(profile(s.id, state.year)).attr("d", line)
+                        .attr("stroke-width", sel ? 3.5 : 1.8).attr("stroke-opacity", sel ? 1 : .4)
+                        .attr("stroke-dasharray", sel ? null : "5 4");
+                });
+                paths[state.scen].raise(); overlay.raise();
+                current = profile(state.scen, state.year);
+                globalW = wmean(current, -90, 90);
+                const arctic = wmean(current, 70, 90), trop = wmean(current, -20, 20);
+                const gx = x(globalW);
+                gLine.attr("x1", gx).attr("x2", gx);
+                gText.attr("x", gx + 6);
+                segBox.selectAll("button").attr("aria-pressed", d => d.id === state.scen);
+                document.documentElement.style.setProperty("--accent", sc.color);
+                document.getElementById("year-label").textContent = state.year;
+                document.getElementById("s-arctic").textContent = fmtC(arctic);
+                document.getElementById("s-trop").textContent = fmtC(trop);
+                document.getElementById("s-global").textContent = fmtC(globalW);
+                document.getElementById("s-ratio").textContent = (arctic / globalW).toFixed(1) + "×";
+                dot.attr("stroke", sc.color);
+            }
+
+            // Hover: nearest latitude band
+            const tip = document.getElementById("tip"), chartBox = document.getElementById("chart");
+            overlay.on("pointermove", e => {
+                const r = overlay.node().getBoundingClientRect();
+                const lat = y.invert((e.clientY - r.top) / r.height * IH);
+                const d = d3.least(current.filter(p => p.w != null), p => Math.abs(p.lat - lat));
+                if (!d) return;
+                dot.style("display", null).attr("cx", x(d.w)).attr("cy", y(d.lat));
+                const cb = chartBox.getBoundingClientRect();
+                tip.textContent = fmtLat(d.lat - 2.5) + " to " + fmtLat(d.lat + 2.5) + ": " + fmtC(d.w) +
+                    (globalW > 0 ? " (" + (d.w / globalW).toFixed(1) + "× global)" : "");
+                tip.style.display = "block"; tip.style.opacity = 1;
+                // keep the tooltip inside the chart so it never widens the page
+                const left = Math.max(4, Math.min(e.clientX - cb.left + 14, cb.width - tip.offsetWidth - 4));
+                tip.style.left = left + "px";
+                tip.style.top = Math.max(4, e.clientY - cb.top - 12) + "px";
+            }).on("pointerleave", () => { tip.style.display = "none"; dot.style("display", "none"); });
+
+            update();
+        }
+    </script>
+</body>
+
+</html>
