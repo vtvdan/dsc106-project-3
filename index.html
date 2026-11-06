@@ -33,7 +33,7 @@
         }
 
         h1 {
-            font: 600 1.85rem/1.2 Charter, "Iowan Old Style", Georgia, serif;
+            font: 600 1.85rem/1.2 Charter, "Iowan Old Style", Roboto, sans-serif;
             margin: 0 0 8px;
             max-width: 24em;
         }
@@ -94,10 +94,47 @@
             min-width: 280px;
         }
 
+        /* Interactive slider */
         #year-slider {
             flex: 1;
-            accent-color: var(--accent);
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            --p: 0;
+            --x: calc(9px + (100% - 18px) * var(--p));
+            background: linear-gradient(to right, var(--accent) var(--x), var(--rule) var(--x));
         }
+        #year-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        #year-slider::-moz-range-track {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--rule);
+        }
+        #year-slider::-moz-range-progress {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--accent);
+        }
+        #year-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        /* Interactive slider */
 
         #year-label {
             font-weight: 600;
@@ -194,7 +231,7 @@
 
         .stats dd {
             margin: 0;
-            font: 600 1.65rem/1.25 Charter, Georgia, serif;
+            font: 600 1.65rem/1.25 Charter, Roboto, sans-serif;
             font-variant-numeric: tabular-nums;
         }
 
@@ -326,7 +363,7 @@
             g.append("g").attr("transform", `translate(0,${IH})`).call(d3.axisBottom(x).ticks(7));
             g.append("g").call(d3.axisLeft(y).tickValues(d3.range(-90, 91, 30)).tickFormat(fmtLat));
             g.append("text").attr("class", "axis-title").attr("x", IW / 2).attr("y", IH + 40).attr("text-anchor", "middle")
-                .text("Warming vs 1995-2014 (°C)");
+                .text("Warming vs. 1995-2014 (°C)");
             g.append("text").attr("class", "axis-title").attr("transform", "rotate(-90)").attr("x", -IH / 2).attr("y", -42)
                 .attr("text-anchor", "middle").text("Latitude");
 
@@ -375,6 +412,7 @@
                 segBox.selectAll("button").attr("aria-pressed", d => d.id === state.scen);
                 document.documentElement.style.setProperty("--accent", sc.color);
                 document.getElementById("year-label").textContent = state.year;
+                slider.style.setProperty("--p", (state.year - y0) / (y1 - y0));
                 document.getElementById("s-arctic").textContent = fmtC(arctic);
                 document.getElementById("s-trop").textContent = fmtC(trop);
                 document.getElementById("s-global").textContent = fmtC(globalW);
