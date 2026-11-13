@@ -1,6 +1,6 @@
 const DATA_URL = "data/cmip6_zonal_warming_ensmean.csv";
-const MODEL_COUNT = 3;   // TODO: set to the number of models in your CSV
-const HALF_WINDOW = 5;   // years averaged on each side of the selected year
+const MODEL_COUNT = 3;   // Sets number of models in CSV
+const HALF_WINDOW = 5;   // Years averaged on each side of the selected year
 
 const SCEN = [
     { id: "ssp126", label: "SSP1-2.6", desc: "Low Emissions", color: "#2b6cb0" },
@@ -12,7 +12,7 @@ const IW = W - M.l - M.r, IH = H - M.t - M.b;
 
 const cosw = lat => Math.cos(lat * Math.PI / 180);
 const fmtLat = d => d === 0 ? "0°" : Math.abs(d) + "°" + (d < 0 ? "S" : "N");
-const fmtC = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(1) + " °C";
+const fmtC = v => (v >= 0 ? "+" : "-") + Math.abs(v).toFixed(1) + " °C";
 
 document.getElementById("method").textContent =
     "Warming is measured relative to each climate model's 1995-2014 average. " +
@@ -22,7 +22,7 @@ document.getElementById("method").textContent =
 
 d3.csv(DATA_URL, d3.autoType).then(init).catch(() => {
     document.getElementById("chart").textContent =
-        "Could not load " + DATA_URL + ". Serve this folder with a web server (e.g. python -m http.server) instead of opening the file directly.";
+        "Sorry, the data couldn't be loaded. Please try refreshing the page.";
 });
 
 function init(rows) {
@@ -171,9 +171,10 @@ function init(rows) {
         dot.style("display", null).attr("cx", x(d.w)).attr("cy", y(d.lat));
         const cb = chartBox.getBoundingClientRect();
         tip.textContent = fmtLat(d.lat - 2.5) + " to " + fmtLat(d.lat + 2.5) + ": " + fmtC(d.w) +
-            (globalW > 0 ? " (" + (d.w / globalW).toFixed(1) + "× global)" : "");
+            (globalW > 0 ? " (" + (d.w / globalW).toFixed(1) + "x global)" : "");
         tip.style.display = "block"; tip.style.opacity = 1;
-        // keep the tooltip inside the chart so it never widens the page
+
+        // Keep tooltip inside the chart so it doesn't widen the page
         const left = Math.max(4, Math.min(e.clientX - cb.left + 14, cb.width - tip.offsetWidth - 4));
         tip.style.left = left + "px";
         tip.style.top = Math.max(4, e.clientY - cb.top - 12) + "px";

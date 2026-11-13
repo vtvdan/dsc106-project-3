@@ -161,8 +161,6 @@ h1 {
     box-shadow: 0 0 0 1px var(--accent);
 }
 
-/* Interactive slider */
-
 #year-label {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -322,4 +320,26 @@ svg .band-label {
 
 .seg button[aria-pressed="true"] .scenario-line {
     border-top: 3px solid white;
+}
+
+/* Write-up section */
+.writeup {
+    max-width: 70ch;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+}
+
+.writeup h2 {
+    font: 600 1.4rem/1.3 Charter, "Iowan Old Style", Roboto, sans-serif;
+    margin: 0 0 12px;
+}
+
+.writeup h3 {
+    font-size: 1.05rem;
+    margin: 24px 0 6px;
+}
+
+.writeup p {
+    margin: 0 0 12px;
 }
